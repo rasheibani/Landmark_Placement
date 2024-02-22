@@ -200,7 +200,7 @@ def draw_subplots_based_on_complexity(csv_file, Complexity):
         statistical_measure = group['num_selected_vertices'].mean()  # Change this to the desired statistical measure
 
         # Add statistical measure as text to the plot
-        ax.text(0.5, 0.15, f'mean of landmarks: {statistical_measure:.2f}', transform=ax.transAxes, verticalalignment='top',
+        ax.text(0.375, 0.15, f'mean of required landmarks: {statistical_measure:.2f}', transform=ax.transAxes, verticalalignment='top',
                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.5))
 
     plt.tight_layout()  # Adjust the layout to prevent overlap
