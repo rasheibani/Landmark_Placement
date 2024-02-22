@@ -43,14 +43,24 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker
 
-def analyse_pareto_fronts(csv_file, all_candidates=False):
+def analyse_pareto_fronts(csv_file, all_candidates=False, Complexity = False):
     df = pd.read_csv(csv_file)
     df['ratio'] = df['total_weight'] / df['sum_of_weight']
 
     if all_candidates:
         df['num_selected_vertices'] = df['num_selected_vertices'] / df['all_candidates'] * 100
 
-    plt.scatter(df['num_selected_vertices'], df['ratio']*100, alpha=0.2)
+    if Complexity:
+        color_map = {'blue':0, 'green':1, 'yellow':2, 'orange':3, 'red':4}
+        # plot the scatter in a way that the color of the points is based on the complexity
+        # in a way that complexity of 0 to 0.2 is blue, 0.2 to 0.4 is green, 0.4 to 0.6 is yellow,
+        # 0.6 to 0.8 is orange, 0.8 to 1 is red
+        # create a new column for the color
+        df['color'] = pd.cut(df['Normalized Graph Asymmetry'], bins=[0, 0.2, 0.4, 0.6, 0.8, 1], labels=['blue', 'green', 'yellow', 'orange', 'red'])
+        # plot the scatter
+        plt.scatter(df['num_selected_vertices'], df['ratio']*100, alpha=0.5, c=df['color'].map(color_map))
+    else:
+        plt.scatter(df['num_selected_vertices'], df['ratio']*100, alpha=0.2)
 
     if all_candidates:
         groups = df.groupby(df['num_selected_vertices'].astype(int))['ratio'].mean()
@@ -153,12 +163,57 @@ def add_all_candidate_column_to_csv(csv_file, all_candidates_file):
     df = df.merge(all_candidates, on='letter')
     df.to_csv(csv_file, index=False)
 
+def add_complexityMeasures_from_xlsx(csv_file, xlsx_file):
+    df = pd.read_csv(csv_file)
+    complexity = pd.read_excel(xlsx_file)
+    df = df.merge(complexity, on='letter')
+    df.to_csv(csv_file, index=False)
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def draw_subplots_based_on_complexity(csv_file, Complexity):
+    df = pd.read_csv(csv_file)
+    df['ratio'] = df['total_weight'] / df['sum_of_weight']
+
+    # Define color map and corresponding colors
+    color_map = {'0.0-0.25': '#b2182b', '0.25-0.50': '#fddbc7', '0.50-0.75': '#67a9cf', '0.75-1.0': '#2166ac'}
+
+    # Create 'color' column based on complexity bins
+    df['color'] = pd.cut(df[Complexity], bins=[0, 0.25, 0.50, 0.75, 1.0],
+                         labels=['0.0-0.25', '0.25-0.50', '0.50-0.75', '0.75-1.0'])
+
+    fig, axs = plt.subplots(2, 2, figsize=(10, 8), sharey=True)  # 2 rows, 2 columns
+
+    for (key, color), ax in zip(color_map.items(), axs.ravel()):
+        group = df[df['color'] == key]
+        ax.scatter(group['num_selected_vertices'], group['ratio'] * 100, label=key, alpha=0.7, color=color)
+        # make sure that the x-axis starts from 0 end at 15
+        ax.set_xlim(0, 15)
+        ax.set_title(f'Complexity: {key}')
+        ax.set_xlabel('Number of Landmarks')
+        ax.set_ylabel('Uncertainty Reduction Ratio')
+
+        # Calculate statistical measure (mean, median, etc.)
+        statistical_measure = group['num_selected_vertices'].mean()  # Change this to the desired statistical measure
+
+        # Add statistical measure as text to the plot
+        ax.text(0.5, 0.15, f'mean of landmarks: {statistical_measure:.2f}', transform=ax.transAxes, verticalalignment='top',
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.5))
+
+    plt.tight_layout()  # Adjust the layout to prevent overlap
+    plt.savefig('plotsubplots_with_statistical_measure.jpg', dpi=300)
+
 
 if __name__ == '__main__':
     # json_to_csv('pareto_fronts.json', 'pareto_fronts.csv')
-    analyse_pareto_fronts('pareto_frontsV1.csv', all_candidates=True)
+    analyse_pareto_fronts('pareto_frontsV1.csv', all_candidates=True, Complexity=True)
     # draw_pareto_for_one_floorplan_only('pareto_fronts.csv', 'CBS_Average-Regular_Approach1', all_candidates=True)
     # calculate_correlation('pareto_fronts.csv')
     # print(calculate_correlation('pareto_fronts.csv'))
     # count_all_candidates_for_all()
     # add_all_candidate_column_to_csv('pareto_frontsV1.csv', 'all_candidates.csv')
+    # add_complexityMeasures_from_xlsx('pareto_frontsV1.csv', 'Complexity_Criteria_for_v9.xlsx')
+    draw_subplots_based_on_complexity('pareto_frontsV1.csv', 'Normalized Graph Asymmetry')
