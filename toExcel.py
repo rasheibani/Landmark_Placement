@@ -3,9 +3,12 @@ import json
 
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib
 
 from scipy.stats import pearsonr
 from scipy.stats import linregress
+
+import geopandas as gpd
 
 
 # convert pareto_fronts.json to pareto_fronts.csv
@@ -14,43 +17,81 @@ def json_to_csv(json_file, csv_file):
         data = json.load(json_file)
     with open(csv_file, 'w') as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(data[0].keys())  # write keys as header
+        headers = list(data[0].keys())  # Convert dict_keys object to a list
+        writer.writerow(headers + ['all_candidates'])
         for row in data:
+            # find the corresponding floorplan and all_candidates from all_candidates.csv
+            with open('all_candidates.csv') as csv_file2:
+                reader = csv.reader(csv_file2)
+                next(reader)
+                for row2 in reader:
+                    if row['letter'] == row2[0]:
+                        row['all_candidates'] = int(row2[1]) / 2
+                        break
             writer.writerow(row.values())
 
-def analyse_pareto_fronts(csv_file):
 
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.ticker
 
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.ticker
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.ticker
+
+def analyse_pareto_fronts(csv_file, all_candidates=False):
     df = pd.read_csv(csv_file)
-    # Calculate ratio
     df['ratio'] = df['total_weight'] / df['sum_of_weight']
 
-    # Groupby num_selected_vertices and calculate stats
-    groups = df.groupby('num_selected_vertices')['ratio'].agg(['mean', 'median', 'min'])
+    if all_candidates:
+        df['num_selected_vertices'] = df['num_selected_vertices'] / df['all_candidates'] * 100
 
-    # Plot
-    plt.scatter(df['num_selected_vertices'], df['ratio'], alpha=0.5)
+    plt.scatter(df['num_selected_vertices'], df['ratio']*100, alpha=0.2)
 
-    # Trendlines
-    plt.plot(groups.index, groups['min'], label='Minimum')
-    plt.plot(groups.index, groups['median'], label='Median')
-    plt.plot(groups.index, groups['mean'], label='Average')
+    if all_candidates:
+        groups = df.groupby(df['num_selected_vertices'].astype(int))['ratio'].mean()
+        plt.plot(groups.index, groups.values * 100, label='Mean', color='red')
+        plt.xlabel('Percentage of Selected Landmarks from All Candidates')
+    else:
+        groups = df.groupby('num_selected_vertices')['ratio'].mean()
+        plt.plot(groups.index, groups.values * 100, label='Mean', color='red')
+        plt.xlabel('Number of Landmarks')
 
     plt.title('Trend of Uncertainty Reduction Ratio with Number of Landmarks')
-    plt.xlabel('Number of Landmarks')
     plt.ylabel('Uncertainty Reduction Ratio')
-    plt.legend()
 
+    # Show y_ticks as percentage
+    plt.gca().yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter())
+    plt.gca().xaxis.set_major_formatter(matplotlib.ticker.PercentFormatter())
+
+    # make sure every tick is shown with 1% interval
+    plt.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=10))
+    plt.gca().xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(base=1))
+
+    plt.legend()
     plt.savefig('plot.jpg', dpi=300)
 
-def draw_pareto_for_one_floorplan_only(csv_file, floorplan_id):
+
+
+
+
+def draw_pareto_for_one_floorplan_only(csv_file, floorplan_id, all_candidates=False, Extended=False):
     df = pd.read_csv(csv_file)
     df = df[df['letter'] == floorplan_id]
-    plt.scatter(df['num_selected_vertices'], df['total_weight']/df['sum_of_weight'], alpha=0.5)
+    if all_candidates:
+        df['num_selected_vertices'] = df['num_selected_vertices'] / df['all_candidates']
+    if Extended:
+        plt.scatter(df['num_selected_vertices'], df['total_weight'] / df['sum_of_weight'], alpha=0.5)
+    plt.scatter(df['num_selected_vertices'], df['total_weight'] / df['sum_of_weight'], alpha=0.5)
     plt.title('Pareto Front')
     plt.xlabel('Number of Landmarks')
     plt.ylabel('Uncertainty Reduction Ratio')
     plt.savefig('pareto_front_' + floorplan_id + '.jpg', dpi=300)
+
 
 # calculate correlation BETWEEN NUMBER OF LANDMARKS AND UNCERTAINTY REDUCTION RATIO
 def calculate_correlation(csv_file):
@@ -86,15 +127,38 @@ def calculate_correlation(csv_file):
     return correlation, p_value, critical_p_value, f_value, critical_f_value
 
 
+def count_all_candidates_for_all():
+    floorplan_Bbox = gpd.read_file("Curated7/ICD_CalculatedV7.shp")
+    floorplan_corner = gpd.read_file("Curated7/CornersV7.shp")
+
+    to_write = []
+
+    for index, row in floorplan_Bbox.iterrows():
+        polygon = row['geometry']
+        letter = row['distinct']
+        floorplan_Corners = floorplan_corner[floorplan_corner.intersects(polygon)]
+        all_candidate = len(floorplan_Corners)
+        to_write.append([letter, all_candidate])
+
+    with open('all_candidates.csv', 'w') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(['letter', 'all_candidates'])
+        for row in to_write:
+            writer.writerow(row)
 
 
-
+def add_all_candidate_column_to_csv(csv_file, all_candidates_file):
+    df = pd.read_csv(csv_file)
+    all_candidates = pd.read_csv(all_candidates_file)
+    df = df.merge(all_candidates, on='letter')
+    df.to_csv(csv_file, index=False)
 
 
 if __name__ == '__main__':
     # json_to_csv('pareto_fronts.json', 'pareto_fronts.csv')
-    #analyse_pareto_fronts('pareto_fronts.csv')
-    #draw_pareto_for_one_floorplan_only('pareto_fronts.csv', 'CBS_Average-Regular_Approach1')
-    calculate_correlation('pareto_fronts.csv')
-    print(calculate_correlation('pareto_fronts.csv'))
-
+    analyse_pareto_fronts('pareto_frontsV1.csv', all_candidates=True)
+    # draw_pareto_for_one_floorplan_only('pareto_fronts.csv', 'CBS_Average-Regular_Approach1', all_candidates=True)
+    # calculate_correlation('pareto_fronts.csv')
+    # print(calculate_correlation('pareto_fronts.csv'))
+    # count_all_candidates_for_all()
+    # add_all_candidate_column_to_csv('pareto_frontsV1.csv', 'all_candidates.csv')
