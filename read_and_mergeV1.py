@@ -248,6 +248,7 @@ def find_vertices_within_distance_from_points(Corners, geomB, distance):
 
     return vertices_within_distance, vertices_within_distance_ID
 
+
 # Define the ILP problem evaluation function
 def evaluate_ILP(individual, edges):
     # Extract the selected vertices from the individual
