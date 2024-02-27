@@ -247,100 +247,45 @@ def find_vertices_within_distance_from_points(Corners, geomB, distance):
             vertices_within_distance_ID.append(row['ID'])
 
     return vertices_within_distance, vertices_within_distance_ID
-def ILP_solver(edges):
-
-
-    # Create a binary variable for each vertex
-    vertex_vars = {vertex: pulp.LpVariable(f'X_{vertex}', cat=pulp.LpBinary) for edge in edges for vertex in
-                   edge['vertices']}
-
-    # Create the problem instance
-    prob = pulp.LpProblem("Vertex_Selection", pulp.LpMaximize)
-
-    # Objective function 1
-    # maximise the total weight of selected vertices
-    prob += pulp.lpSum(
-        [edge['Weight'] * vertex_vars[vertex] for edge in edges for vertex in edge['vertices']]), "Total_Weight"
-    # Objective function 2
-     # minimise the number of selected vertices
-    prob += pulp.lpSum([vertex_vars[vertex] for edge in edges for vertex in edge['vertices']]), "Total_Vertices"
-
-
-    # Constraints: Each edgeID should have one selected vertex
-    for edge in edges:
-        prob += pulp.lpSum([vertex_vars[vertex] for vertex in edge['vertices']]) == 1, f"Edge_{edge['ID']}_Selection"
-
-    # Solve the ILP problem
-    prob.solve()
-
-    selected_vertices = [v.name.split('_')[1] for v in prob.variables() if v.varValue == 1]
-    # print("Selected Vertices:", selected_vertices)
-
-    # Print the total weight of selected vertices
-    total_weight = sum(
-        edges[0]['Weight'] for edge in edges for vertex in edge['vertices'] if vertex in selected_vertices)
-    return selected_vertices
-
-def ILP_solver_Gorubi(edges):
-    # Create a new model
-    model = gp.Model("Vertex_Selection")
-
-    # Create binary variables for each vertex
-    vertex_vars = {}
-    for edge in edges:
-        for vertex in edge['vertices']:
-            vertex_vars[vertex] = model.addVar(vtype=GRB.BINARY, name=f'X_{vertex}')
-
-    # Update model to integrate new variables
-    model.update()
-
-    # Set up objective function 1: Maximize total weight
-    total_weight_expr = gp.LinExpr()
-    for edge in edges:
-        for vertex in edge['vertices']:
-            total_weight_expr += edge['Weight'] * vertex_vars[vertex]
-    model.setObjective(total_weight_expr, GRB.MAXIMIZE)
-
-    # # Set up objective function 2: Minimize overall selected vertices
-    # model.setObjective(gp.quicksum(vertex_vars[vertex] for vertex in vertex_vars.values()), GRB.MINIMIZE)
-
-    # Add constraints: Each edgeID should have one selected vertex
-    for edge in edges:
-        model.addConstr(gp.quicksum(vertex_vars[vertex] for vertex in edge['vertices']) == 1, f"Edge_{edge['ID']}_Selection")
-
-    # Optimize the model
-    model.optimize()
-
-    # Retrieve selected vertices
-    selected_vertices = [var.varName.split('_')[1] for var in model.getVars() if var.x > 0.5]
-
-    # Print selected vertices
-    print("Selected Vertices:", selected_vertices)
-
-    # Print total weight of selected vertices
-    total_weight = sum(edge['Weight'] for edge in edges for vertex in edge['vertices'] if vertex in selected_vertices)
-    print("Total Weight of Selected Vertices:", total_weight)
-
-    return selected_vertices
-
 
 # Define the ILP problem evaluation function
 def evaluate_ILP(individual, edges):
-    selected_vertices = [vertex for vertex, selected in zip(vertices, individual) if selected]
-    total_weight = sum(edge['Weight'] for edge in edges for vertex in edge['vertices'] if vertex in selected_vertices)
+    # Extract the selected vertices from the individual
+    Xc = [vertex for vertex, is_selected in zip(vertices, individual) if is_selected]
+
+    # see if a vertex is among all_vertices of an edge (if vertex is in the buffer of an edge)
+    Yodc = {}
+    for edgesss in edges:
+        for vertex in edgesss['all_vertices']:
+            if vertex in Xc and vertex in edgesss['vertices']:
+                Yodc[(edgesss['ID'], vertex)] = 1
+            else:
+                Yodc[(edgesss['ID'], vertex)] = 0
+    # Calculate the total weight and the number of selected vertices
+    total_weight = sum(edge['Weight'] * Yodc[(edge['ID'], vertex)] for edge in edges for vertex in edge['all_vertices'])
     num_selected_vertices = sum(individual)
 
     # Penalty for violating the constraint: For every edge, only one vertex must be selected
     penalty = 0
     for edge in edges:
-        selected_edge_vertices = [vertex for vertex in edge['vertices'] if individual[vertices_index[vertex]] == 1]
-
-        if len(selected_edge_vertices) > 1:
-            penalty = len(selected_edge_vertices) - 1
+        if sum(Yodc[(edge['ID'], vertex)] for vertex in edge['vertices']) != 1:
+            penalty = (sum(Yodc[(edge['ID'], vertex)] for vertex in edge['vertices'])) - 1
             total_weight += - penalty_c * penalty
+    # penalty for violating the constraint: the Yodc can be 1 if only corresponding vertex is both selected and edge[
+    # 'vertices'], otherwise it should be 0
+    penalty = 0
+    for edge in edges:
+        for vertex in edge['vertices']:
+            if Yodc[(edge['ID'], vertex)] == 1 and vertex not in Xc:
+                penalty += - 1
+                total_weight += - penalty_c * penalty
+
 
     # Evaluate fitness
     return total_weight, num_selected_vertices, penalty,
+
+
+
 same = 0
 different = 0
 due = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -379,7 +324,7 @@ for filename in os.listdir(folder):
 counter = 0
 for index, row in floorplan_Bbox.iterrows():
     counter += 1
-    if counter > 20000:
+    if counter > 2:
         break
 
     polygon = row['geometry']
@@ -460,29 +405,20 @@ for index, row in floorplan_Bbox.iterrows():
 
     #create a dictionary that has this structure, ID of uncertain edge, weight of uncertain edge, and the vertices that are within distance from the edge
     # we will solve a linear integer programming problem to find the best vertices to allocate
-
     ILP = []
-
     for edge in edges:
         #check if the aedge has attriuibte weight
         if 'Weight' in edge[2]:
             if edge[2]['Weight'] > 1:
                 # find the vertices within distance from the edge
                 vertices, vertices_ID = find_vertices_within_distance_from_points(floorplan_Corners, gpd.GeoDataFrame(geometry=[LineString([edge[0], edge[1]])], crs=32639), 150)
-                # print('ID: ', edge[2]['ID'], 'Weight: ', edge[2]['Weight'], 'vertices: ', vertices_ID)
-                ILP.append({'ID': edge[2]['ID'], 'Weight': edge[2]['Weight'], 'vertices': vertices_ID})
-    # print(ILP)
-    # ILP_solver(ILP)
-    # print(ILP)
-
-    #ILP_solver_Gorubi(ILP)
-    #print(ILP)
-
-
+                # extract the list of all IDs of vertices in the floorplan
+                all_vertices_ID = list(floorplan_Corners['ID'])
+                ILP.append({'ID': edge[2]['ID'], 'Weight': edge[2]['Weight'], 'vertices': vertices_ID, 'all_vertices': all_vertices_ID })
     # Define the ILP problem evaluation function and solve it using DEAP
     penalty_c = 50
-
     edges = ILP
+    print(ILP)
 
     sum_of_weight = sum(edge['Weight'] for edge in edges)
     # Extract vertices from edges
@@ -509,7 +445,7 @@ for index, row in floorplan_Bbox.iterrows():
     toolbox.register("select", tools.selNSGA2)
 
     # Define the number of generations and population size
-    NGEN = 1000
+    NGEN = 5000
     MU = 100
 
     # Initialize the population
@@ -537,11 +473,10 @@ for index, row in floorplan_Bbox.iterrows():
         if pareto_front['total_weight'] > 0:
             if pareto_front not in unique_pareto_fronts:
                 unique_pareto_fronts.append(pareto_front)
-
+    print(unique_pareto_fronts)
     with open('pareto_fronts.json', 'w') as f:
         for element in unique_pareto_fronts:
             json.dump(element, f)
-            f.write('\n')
 
 
 
