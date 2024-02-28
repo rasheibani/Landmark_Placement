@@ -262,6 +262,7 @@ def evaluate_ILP(individual, edges):
                 Yodc[(edgesss['ID'], vertex)] = 1
             else:
                 Yodc[(edgesss['ID'], vertex)] = 0
+
     # Calculate the total weight and the number of selected vertices
     total_weight = sum(edge['Weight'] * Yodc[(edge['ID'], vertex)] for edge in edges for vertex in edge['all_vertices'])
     num_selected_vertices = sum(individual)
@@ -269,12 +270,11 @@ def evaluate_ILP(individual, edges):
     # Penalty for violating the constraint: For every edge, only one vertex must be selected
     penalty = 0
     for edge in edges:
-        if sum(Yodc[(edge['ID'], vertex)] for vertex in edge['vertices']) != 1:
+        if sum(Yodc[(edge['ID'], vertex)] for vertex in edge['vertices']) > 1:
             penalty = (sum(Yodc[(edge['ID'], vertex)] for vertex in edge['vertices'])) - 1
             total_weight += - penalty_c * penalty
     # penalty for violating the constraint: the Yodc can be 1 if only corresponding vertex is both selected and edge[
     # 'vertices'], otherwise it should be 0
-    penalty = 0
     for edge in edges:
         for vertex in edge['vertices']:
             if Yodc[(edge['ID'], vertex)] == 1 and vertex not in Xc:
@@ -325,7 +325,7 @@ for filename in os.listdir(folder):
 counter = 0
 for index, row in floorplan_Bbox.iterrows():
     counter += 1
-    if counter > 2:
+    if counter > 100:
         break
 
     polygon = row['geometry']
@@ -419,7 +419,6 @@ for index, row in floorplan_Bbox.iterrows():
     # Define the ILP problem evaluation function and solve it using DEAP
     penalty_c = 50
     edges = ILP
-    print(ILP)
 
     sum_of_weight = sum(edge['Weight'] for edge in edges)
     # Extract vertices from edges
@@ -474,7 +473,7 @@ for index, row in floorplan_Bbox.iterrows():
         if pareto_front['total_weight'] > 0:
             if pareto_front not in unique_pareto_fronts:
                 unique_pareto_fronts.append(pareto_front)
-    print(unique_pareto_fronts)
+    # print(unique_pareto_fronts)
     with open('pareto_fronts.json', 'w') as f:
         for element in unique_pareto_fronts:
             json.dump(element, f)
