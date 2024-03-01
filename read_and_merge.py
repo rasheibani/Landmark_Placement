@@ -9,6 +9,8 @@ from deap import base, creator, tools, algorithms
 from computational_geometry_functions import edge_bearing, all_bearings_sorted, nearest_quarter, calculate_edge_angles, find_vertices_within_distance_from_points, check_if_the_node_is_uncertain, check_edge_uncertainty, uncertainty_weights_by_ID
 from multiprocessing import Pool
 
+def collect_results(result):
+    pareto_fronts.append(result)
 # Define the function to evaluate ILP
 def evaluate_ILP(individual_edges):
     individual, edges = individual_edges
@@ -109,6 +111,8 @@ def process_floorplan(index, row):
     for ind in pareto_front:
         total_weight, num_selected_vertices, penalties = evaluate_ILP((ind, edges))
         pareto_fronts.append({'letter': letter, 'total_weight': total_weight, 'num_selected_vertices': num_selected_vertices, 'penalties': penalties, 'uncertain_edges': len(edges), 'sum_of_weight': sum_of_weight})
+    print(pareto_fronts)
+    return pareto_fronts
 
 if __name__ == "__main__":
     penalty_c = 50
@@ -142,7 +146,8 @@ if __name__ == "__main__":
         counter += 1
         if counter > 100:
             break
-        pool.apply_async(process_floorplan, args=(index, row))
+        pool.apply_async(process_floorplan, args=(index, row), callback=collect_results)
+
     pool.close()
     pool.join()
     unique_pareto_fronts = []

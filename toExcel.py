@@ -209,11 +209,11 @@ def draw_subplots_based_on_complexity(csv_file, Complexity):
 
 if __name__ == '__main__':
     # json_to_csv('pareto_fronts.json', 'pareto_fronts.csv')
-    analyse_pareto_fronts('pareto_frontsV1.csv', all_candidates=True, Complexity=True)
-    # draw_pareto_for_one_floorplan_only('pareto_fronts.csv', 'CBS_Average-Regular_Approach1', all_candidates=True)
-    # calculate_correlation('pareto_fronts.csv')
-    # print(calculate_correlation('pareto_fronts.csv'))
+    # draw_pareto_for_one_floorplan_only('pareto_fronts.csv', 'AEJ_Average-Regular_Approach1', all_candidates=False)
+    print(calculate_correlation('pareto_fronts.csv'))
     # count_all_candidates_for_all()
-    # add_all_candidate_column_to_csv('pareto_frontsV1.csv', 'all_candidates.csv')
-    # add_complexityMeasures_from_xlsx('pareto_frontsV1.csv', 'Complexity_Criteria_for_v9.xlsx')
-    draw_subplots_based_on_complexity('pareto_frontsV1.csv', 'Normalized Graph Asymmetry')
+    # add_all_candidate_column_to_csv('pareto_fronts.csv', 'all_candidates.csv')
+    # add_complexityMeasures_from_xlsx('pareto_fronts.csv', 'Complexity_Criteria_for_v9.xlsx')
+    draw_subplots_based_on_complexity('pareto_fronts.csv', 'Normalized Graph Asymmetry_x')
+    analyse_pareto_fronts('pareto_fronts.csv', all_candidates=False, Complexity=False)
+

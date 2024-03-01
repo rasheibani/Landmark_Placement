@@ -325,7 +325,7 @@ for filename in os.listdir(folder):
 counter = 0
 for index, row in floorplan_Bbox.iterrows():
     counter += 1
-    if counter > 100:
+    if counter > 10000:
         break
 
     polygon = row['geometry']
