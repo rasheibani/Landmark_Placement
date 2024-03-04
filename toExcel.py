@@ -47,6 +47,9 @@ def analyse_pareto_fronts(csv_file, all_candidates=False, Complexity = False):
     df = pd.read_csv(csv_file)
     df['ratio'] = df['total_weight'] / df['sum_of_weight']
 
+    # filter out if the num_selected_vertices is more than 5 but the ratio is less than 0.4
+    df = df[~((df['num_selected_vertices'] > 5) & (df['ratio'] < 0.4))]
+
     if all_candidates:
         df['num_selected_vertices'] = df['num_selected_vertices'] / df['all_candidates'] * 100
 
@@ -189,9 +192,21 @@ def draw_subplots_based_on_complexity(csv_file, Complexity):
 
     for (key, color), ax in zip(color_map.items(), axs.ravel()):
         group = df[df['color'] == key]
+        # filter out if the num_selected_vertices is more than 5 but the ratio is less than 0.4
+        group = group[~((group['num_selected_vertices'] > 5) & (group['ratio'] < 0.4))]
+
         ax.scatter(group['num_selected_vertices'], group['ratio'] * 100, label=key, alpha=0.7, color=color)
         # make sure that the x-axis starts from 0 end at 15
         ax.set_xlim(0, 15)
+
+
+        #draw A dashed vertical line and show the value on x-axis point fot X: mean of all values of num_selected_vertices
+        # make sure the x-axis value is shown where the vertical line is drawn
+        ax.axvline(group['num_selected_vertices'].mean(), linestyle='--', color='black', alpha=0.7)
+        ax.text(group['num_selected_vertices'].mean() + 0.1, 0.15*100, f'{group["num_selected_vertices"].mean():.2f}', verticalalignment='center')
+
+
+
         ax.set_title(f'Complexity: {key}')
         ax.set_xlabel('Number of Landmarks')
         ax.set_ylabel('Uncertainty Reduction Ratio')
@@ -200,20 +215,37 @@ def draw_subplots_based_on_complexity(csv_file, Complexity):
         statistical_measure = group['num_selected_vertices'].mean()  # Change this to the desired statistical measure
 
         # Add statistical measure as text to the plot
-        ax.text(0.3751, 0.15, f'mean of required landmarks: {statistical_measure:.2f}', transform=ax.transAxes, verticalalignment='top',
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.5))
+        # ax.text(0.3751, 0.15, f'mean of required landmarks: {statistical_measure:.2f}', transform=ax.transAxes, verticalalignment='top',
+        #         bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.5))
 
     plt.tight_layout()  # Adjust the layout to prevent overlap
     plt.savefig('plotsubplots_with_statistical_measure.jpg', dpi=300)
 
+def draw_heatmap(csv_file):
+    df = pd.read_csv(csv_file)
+    df['ratio'] = df['total_weight'] / df['sum_of_weight']
+    # filter out if the num_selected_vertices is more than 5 but the ratio is less than 0.4
+    df = df[~((df['num_selected_vertices'] > 5) & (df['ratio'] < 0.4))]
+
+    # Draw a 2D density plot
+    plt.hexbin(df['num_selected_vertices']/df['all_candidates']*100, df['ratio']*100, gridsize=13, cmap='Blues', bins='log')
+    plt.colorbar(label='log10(count)')
+    plt.title('Heatmap of Uncertainty Reduction Ratio')
+    plt.xlabel('Percentage of Landmarks Selected from all Candidates')
+    plt.ylabel('Uncertainty Reduction Ratio (%)')
+    plt.savefig('heatmap.jpg', dpi=300)
+
+
+
+
 
 if __name__ == '__main__':
     # json_to_csv('pareto_fronts.json', 'pareto_fronts.csv')
-    # draw_pareto_for_one_floorplan_only('pareto_fronts.csv', 'AEJ_Average-Regular_Approach1', all_candidates=False)
-    print(calculate_correlation('pareto_fronts.csv'))
+    draw_pareto_for_one_floorplan_only('pareto_fronts.csv', 'CBS_Average-Regular_Approach1', all_candidates=False)
+    # print(calculate_correlation('pareto_fronts.csv'))
     # count_all_candidates_for_all()
     # add_all_candidate_column_to_csv('pareto_fronts.csv', 'all_candidates.csv')
     # add_complexityMeasures_from_xlsx('pareto_fronts.csv', 'Complexity_Criteria_for_v9.xlsx')
-    draw_subplots_based_on_complexity('pareto_fronts.csv', 'Normalized Graph Asymmetry_x')
-    analyse_pareto_fronts('pareto_fronts.csv', all_candidates=False, Complexity=False)
-
+    # draw_subplots_based_on_complexity('pareto_fronts.csv', 'Normalized Graph Asymmetry')
+    # analyse_pareto_fronts('pareto_fronts.csv', all_candidates=True, Complexity=False)
+    # draw_heatmap('pareto_fronts.csv')
