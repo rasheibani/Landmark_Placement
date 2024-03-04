@@ -47,11 +47,47 @@ def all_bearings_sorted(G, Node):
     return bearings
 
 
-def nearest_quarter(ang):
-    # calculate the nearest quarter for an angle
-    ang = ang % 360
-    return (ang // 90) * 90
+def nearest_quarter(ang, Grammar='4sectors'):
+    # calculate the nearest quarter for an angle given a grammar
+    if Grammar=='4sectors':
+        ang = ang % 360
+        return (ang // 90) * 90
+    elif Grammar=='8sectors':
+        ang = ang % 360
+        return (ang // 45) * 45
+    elif Grammar == '6sectors':
+        ang = ang % 360
 
+        if ang < 22.5:
+            return 0
+        elif ang < 67.5:
+            return 22
+        elif ang < 90 + 45:
+            return 67.5
+        elif ang < 225:
+            return 135
+        elif ang < 292.5:
+            return 225
+        else:
+            return 0
+    elif Grammar == 'Klippel':
+        ang = ang % 360
+        if ang < 5:
+            return 0
+        elif ang < 5+73:
+            return 5
+        elif ang < 5+73+20:
+            return 5+73
+        elif ang < 5+73+20+70:
+            return 5+73+20
+        elif ang < 5+73+20+70+24:
+            return 5+73+20+70
+        elif ang < 5+73+20+70+24+60:
+            return 5+73+20+70+24
+        elif ang < 5+73+20+70+24+60+39:
+            return 5+73+20+70+24+60
+        else:
+            return 0
 
 def calculate_edge_angles(bearings_sorted):
     num_edges = len(bearings_sorted)
@@ -69,7 +105,7 @@ def calculate_edge_angles(bearings_sorted):
     return angles
 
 
-def check_if_the_node_is_uncertain(bearings_sorted):
+def check_if_the_node_is_uncertain(bearings_sorted, Grammar='4sectors'):
     # check if the node is uncertain
     # print("the bearing : " + str(bearings_sorted))
     angles_between_edges = calculate_edge_angles(bearings_sorted)
@@ -80,14 +116,14 @@ def check_if_the_node_is_uncertain(bearings_sorted):
         # mod 360 all elements of the list
         angles_relative = [angle % 360 for angle in angles_relative]
         # claculate the quarter of angles_relative
-        nearest_quarters = [nearest_quarter(angle) for angle in angles_relative]
+        nearest_quarters = [nearest_quarter(angle,Grammar=Grammar) for angle in angles_relative]
         # check if there is a quarter that is repeated 2 times or more
         if max(Counter(nearest_quarters).values()) >= 2 and len(bearings_sorted) > 1:
             return True
     return False
 
-def check_if_two_outgoing_are_uncertain(out1, out2):
-    if nearest_quarter(out1 % 360) == nearest_quarter(out2 % 360):
+def check_if_two_outgoing_are_uncertain(out1, out2, Grammar='4sectors'):
+    if nearest_quarter(out1 % 360,Grammar=Grammar) == nearest_quarter(out2 % 360,Grammar=Grammar):
         return True
     return False
 
@@ -105,14 +141,14 @@ def check_incoming_uncertainty(G, Node, edge):
 
     for i in range(len(bearings)):
         if i < len(bearings)-1:
-            if check_if_two_outgoing_are_uncertain(bearings[i], bearings[i+1]):
+            if check_if_two_outgoing_are_uncertain(bearings[i], bearings[i+1], Grammar='4sectors'):
                 return True
         elif i == len(bearings)-1:
-            if check_if_two_outgoing_are_uncertain(bearings[i], bearings[0]):
+            if check_if_two_outgoing_are_uncertain(bearings[i], bearings[0], Grammar='4sectors'):
                 return True
     return False
 
-def check_edge_uncertainty(G, Node):
+def check_edge_uncertainty(G, Node, Grammar='4sectors'):
     #print("Node: " + str(Node) + " has " + str(G.degree(Node)) + " edges")
     # return a dictionary of edges that are uncertain in this way: {incoimg_edge: [(outgoing_edge1,utgoing_edge2),...],...}
     bearings = all_bearings_sorted(G, Node)
@@ -158,7 +194,7 @@ def check_edge_uncertainty(G, Node):
 
 
                 # check if the two outcoming edges are uncertain
-                if check_if_two_outgoing_are_uncertain(outgoing_bearing1_corrected, outgoing_bearing2_corrected) and not np.allclose(outgoing_bearing1, outgoing_bearing2, atol=0.1):
+                if check_if_two_outgoing_are_uncertain(outgoing_bearing1_corrected, outgoing_bearing2_corrected,Grammar=Grammar) and not np.allclose(outgoing_bearing1, outgoing_bearing2, atol=0.1):
                     if incoming_bearing_rounded in edge_uncertainty:
                         if (outgoing_bearing1_rounded, outgoing_bearing2_rounded) not in edge_uncertainty[incoming_bearing_rounded] and (outgoing_bearing2_rounded, outgoing_bearing1_rounded) not in edge_uncertainty[incoming_bearing_rounded]:
                             edge_uncertainty[incoming_bearing_rounded].append((outgoing_bearing1_rounded, outgoing_bearing2_rounded))
