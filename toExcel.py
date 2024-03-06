@@ -203,7 +203,7 @@ def draw_subplots_based_on_complexity(csv_file, Complexity):
         #draw A dashed vertical line and show the value on x-axis point fot X: mean of all values of num_selected_vertices
         # make sure the x-axis value is shown where the vertical line is drawn
         ax.axvline(group['num_selected_vertices'].mean(), linestyle='--', color='black', alpha=0.7)
-        ax.text(group['num_selected_vertices'].mean() + 0.1, 0.15*100, f'{group["num_selected_vertices"].mean():.2f}', verticalalignment='center')
+        ax.text(group['num_selected_vertices'].mean() + 0.1, 0.2*100, f'{group["num_selected_vertices"].mean():.2f}', verticalalignment='center')
 
 
 
@@ -239,13 +239,77 @@ def draw_heatmap(csv_file):
 
 
 
+def draw_aggregation_of_all_results2(csv_files):
+    fig, axs = plt.subplots(4, 4, figsize=(16, 16), sharey=True)
+
+    color_map = {'0.0-0.25': '#b2182b', '0.25-0.50': '#fddbc7', '0.50-0.75': '#67a9cf', '0.75-1.0': '#2166ac'}
+
+    for i, csv_file in enumerate(csv_files):
+        df = pd.read_csv(csv_file)
+
+        df['ratio'] = df['total_weight'] / df['sum_of_weight']
+
+        df = df[~((df['num_selected_vertices'] > 5) & (df['ratio'] < 0.4))]
+
+        df['color'] = pd.cut(df['Normalized Graph Asymmetry'], bins=[0, 0.25, 0.50, 0.75, 1.0],
+                             labels=['0.0-0.25', '0.25-0.50', '0.50-0.75', '0.75-1.0'])
+
+        counter = 0
+
+        for color_range in ['0.0-0.25', '0.25-0.50', '0.50-0.75', '0.75-1.0']:
+            ax = axs[counter, i]
+            # set the font size of all texts in the plot
+            plt.rcParams.update({'font.size': 14})
+            group = df[df['color'] == color_range]
+            ax.scatter(group['num_selected_vertices'], group['ratio'] * 100, label=color_range, alpha=1, color=color_map[color_range])
+            ax.axvline(group['num_selected_vertices'].mean(), linestyle='--', color='black', alpha=0.7)
+            ax.text(group['num_selected_vertices'].mean(), 0.1*100, f'{group["num_selected_vertices"].mean():.2f}', verticalalignment='top', horizontalalignment='left')
+            ax.set_xlim(0, 15)
+            # do not show top and right axis
+            ax.spines['right'].set_visible(False)
+            ax.spines['top'].set_visible(False)
+
+
+            if counter == 3:
+                ax.set_xlabel('Number of Landmarks', fontsize=14)
+            else:
+                ax.set_xticklabels([])
+
+            if i == 0:
+                ax.set_ylabel(f'(Complexity: {color_range})\n'+'Uncertainty Reduction Ratio', fontsize=14)
+
+            if counter==0:
+                if i==0:
+                    ax.set_title('4 Sectors')
+                elif i==1:
+                    ax.set_title('6 Sectors')
+                elif i==2:
+                    ax.set_title('8 Sectors')
+                else:
+                    ax.set_title('Klippel')
+            counter += 1
+
+    axs[3, 0].set_xlabel('Number of Landmarks')
+    axs[3, 1].set_xlabel('Number of Landmarks')
+
+
+
+    # save the figure in with a ration of 2 to 1 and 300 dpi
+    plt.tight_layout()
+    plt.savefig('aggreagte2.jpg', dpi=300)
+
+
+
+
 if __name__ == '__main__':
+
     # json_to_csv('pareto_fronts.json', 'pareto_fronts.csv')
-    draw_pareto_for_one_floorplan_only('pareto_fronts.csv', 'CBS_Average-Regular_Approach1', all_candidates=False)
-    # print(calculate_correlation('pareto_fronts.csv'))
     # count_all_candidates_for_all()
     # add_all_candidate_column_to_csv('pareto_fronts.csv', 'all_candidates.csv')
     # add_complexityMeasures_from_xlsx('pareto_fronts.csv', 'Complexity_Criteria_for_v9.xlsx')
+    # draw_pareto_for_one_floorplan_only('pareto_fronts.csv', 'CBS_Average-Regular_Approach1', all_candidates=False)
     # draw_subplots_based_on_complexity('pareto_fronts.csv', 'Normalized Graph Asymmetry')
     # analyse_pareto_fronts('pareto_fronts.csv', all_candidates=True, Complexity=False)
     # draw_heatmap('pareto_fronts.csv')
+    # print(calculate_correlation('pareto_fronts.csv'))
+    draw_aggregation_of_all_results2(['V2results-4sectors/pareto_fronts.csv', 'V2results-6sectors/pareto_fronts.csv', 'V2results-8sectors/pareto_fronts.csv', 'V2results-Klippel/pareto_fronts.csv'])
