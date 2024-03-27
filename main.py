@@ -110,7 +110,7 @@ for index, row in floorplan_Bbox.iterrows():
             # print("the nearest_quarters : " + str(nearest_quarters))
 
             # check if the node is uncertain
-            if check_if_the_node_is_uncertain(bearings):
+            if check_if_the_node_is_uncertain(bearings, Grammar=Grammar):
                 uncertain_intersection[G.degree(Nodes)] += 1
                 u_edge, u_coord = check_edge_uncertainty(G, Nodes, Grammar=Grammar)
                 all_uncertain_edges_in_dateset += len(u_edge.keys())
