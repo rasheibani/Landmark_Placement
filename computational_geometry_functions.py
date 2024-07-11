@@ -51,7 +51,15 @@ def nearest_quarter(ang, Grammar='4sectors'):
     # calculate the nearest quarter for an angle given a grammar
     if Grammar=='4sectors':
         ang = ang % 360
-        return (ang // 90) * 90
+
+        if ang>45 and ang<=135:
+            return 45
+        elif ang>135 and ang<=225:
+            return 135
+        elif ang>225 and ang<=315:
+            return 225
+        else:
+            return 315
     elif Grammar=='8sectors':
         ang = ang % 360
         return (ang // 45) * 45
