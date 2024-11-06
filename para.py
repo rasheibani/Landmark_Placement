@@ -62,8 +62,8 @@ def process_floorplan(index, row):
     polygon = row['geometry']
     letter = row['distinct']
     print(letter)
-    floorplan_skeleton = gpd.read_file("realfloorplans/shpa/chadstone_graph_utm.shp")
-    floorplan_corner = gpd.read_file("realfloorplans/shpa/chadstone_Corners_utm.shp")
+    floorplan_skeleton = gpd.read_file("data_realworld/shpa/chadstone_graph_utm.shp")
+    floorplan_corner = gpd.read_file("data_realworld/shpa/chadstone_Corners_utm.shp")
 
     edgecount = {}
     for i in range(101):
@@ -223,13 +223,13 @@ if __name__ == '__main__':
     for i in range(10):
         uncertain_intersection[i] = 0
 
-    # floorplan_Bbox = gpd.read_file("realfloorplans/shpa/Falcon_BBox.shp")
-    # floorplan_border = gpd.read_file("realfloorplans/shpa/Falcon_OneArea.shp")
-    # floorplan_skeleton = gpd.read_file("realfloorplans/shpa/falcon_graph.shp")
-    # floorplan_corner = gpd.read_file("realfloorplans/shpa/Falcon_Corners.shp")
+    # floorplan_Bbox = gpd.read_file("data_realworld/shpa/Falcon_BBox.shp")
+    # floorplan_border = gpd.read_file("data_realworld/shpa/Falcon_OneArea.shp")
+    # floorplan_skeleton = gpd.read_file("data_realworld/shpa/falcon_graph.shp")
+    # floorplan_corner = gpd.read_file("data_realworld/shpa/Falcon_Corners.shp")
 
-    floorplan_Bbox = gpd.read_file("realfloorplans/shpa/chadstone_BBox_utm.shp")
-    floorplan_border = gpd.read_file("realfloorplans/shpa/chadstone_area_utm.shp")
-    floorplan_skeleton = gpd.read_file("realfloorplans/shpa/chadstone_graph_utm.shp")
-    floorplan_corner = gpd.read_file("realfloorplans/shpa/chadstone_Corners_utm.shp")
+    floorplan_Bbox = gpd.read_file("data_realworld/shpa/chadstone_BBox_utm.shp")
+    floorplan_border = gpd.read_file("data_realworld/shpa/chadstone_area_utm.shp")
+    floorplan_skeleton = gpd.read_file("data_realworld/shpa/chadstone_graph_utm.shp")
+    floorplan_corner = gpd.read_file("data_realworld/shpa/chadstone_Corners_utm.shp")
     parallel_process()

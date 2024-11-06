@@ -79,10 +79,10 @@ uncertain_intersection = {}
 for i in range(10):
     uncertain_intersection[i] = 0
 
-floorplan_Bbox = gpd.read_file("../Curated7/ICD_CalculatedV7.shp")
-floorplan_border = gpd.read_file("../Curated7/OneLetterV7.shp")
-floorplan_skeleton = gpd.read_file("../Curated7/SkelV7.shp")
-floorplan_corner = gpd.read_file("../Curated7/CornersV7.shp")
+floorplan_Bbox = gpd.read_file("../data_synthetic/ICD_CalculatedV7.shp")
+floorplan_border = gpd.read_file("../data_synthetic/OneLetterV7.shp")
+floorplan_skeleton = gpd.read_file("../data_synthetic/SkelV7.shp")
+floorplan_corner = gpd.read_file("../data_synthetic/CornersV7.shp")
 
 # clear all files in Geojson folder
 folder = 'Geojson/'

@@ -141,8 +141,8 @@ def calculate_correlation(csv_file):
 
 
 def count_all_candidates_for_all():
-    floorplan_Bbox = gpd.read_file("../Curated7/ICD_CalculatedV7.shp")
-    floorplan_corner = gpd.read_file("../Curated7/CornersV7.shp")
+    floorplan_Bbox = gpd.read_file("../data_synthetic/ICD_CalculatedV7.shp")
+    floorplan_corner = gpd.read_file("../data_synthetic/CornersV7.shp")
 
     to_write = []
 
