@@ -285,10 +285,10 @@ def process_floorplan(row):
 
 if __name__ == '__main__':
     # Load your shapefiles and prepare your data here
-    floorplan_Bbox = gpd.read_file("Curated7/ICD_CalculatedV7.shp")
-    floorplan_border = gpd.read_file("Curated7/OneLetterV7.shp")
-    floorplan_skeleton = gpd.read_file("Curated7/SkelV7.shp")
-    floorplan_corner = gpd.read_file("Curated7/CornersV7.shp")
+    floorplan_Bbox = gpd.read_file("../Curated7/ICD_CalculatedV7.shp")
+    floorplan_border = gpd.read_file("../Curated7/OneLetterV7.shp")
+    floorplan_skeleton = gpd.read_file("../Curated7/SkelV7.shp")
+    floorplan_corner = gpd.read_file("../Curated7/CornersV7.shp")
 
     row = [row for index, row in floorplan_Bbox.iterrows()]
 

@@ -21,7 +21,7 @@ def json_to_csv(json_file, csv_file):
         writer.writerow(headers + ['all_candidates'])
         for row in data:
             # find the corresponding floorplan and all_candidates from all_candidates.csv
-            with open('all_candidates.csv') as csv_file2:
+            with open('../all_candidates.csv') as csv_file2:
                 reader = csv.reader(csv_file2)
                 next(reader)
                 for row2 in reader:
@@ -141,8 +141,8 @@ def calculate_correlation(csv_file):
 
 
 def count_all_candidates_for_all():
-    floorplan_Bbox = gpd.read_file("Curated7/ICD_CalculatedV7.shp")
-    floorplan_corner = gpd.read_file("Curated7/CornersV7.shp")
+    floorplan_Bbox = gpd.read_file("../Curated7/ICD_CalculatedV7.shp")
+    floorplan_corner = gpd.read_file("../Curated7/CornersV7.shp")
 
     to_write = []
 
@@ -153,7 +153,7 @@ def count_all_candidates_for_all():
         all_candidate = len(floorplan_Corners)
         to_write.append([letter, all_candidate])
 
-    with open('all_candidates.csv', 'w') as csv_file:
+    with open('../all_candidates.csv', 'w') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(['letter', 'all_candidates'])
         for row in to_write:
