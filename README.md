@@ -29,10 +29,6 @@ To run this project, you'll need:
    cd landmark_placement
    ```
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
 
 ## Usage
 
