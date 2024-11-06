@@ -2,7 +2,6 @@ import math
 
 import geopandas as gpd
 import numpy as np
-import pulp
 from shapely.geometry import LineString, Point, Polygon
 import momepy
 import networkx as nx
@@ -10,11 +9,7 @@ import numpy
 import os
 import osmnx as ox
 from collections import Counter
-import gurobipy as gp
-from gurobipy import GRB
 
-import random
-from deap import base, creator, tools, algorithms
 
 from shapely.geometry import LineString, Point, Polygon
 def edge_bearing(edge):

@@ -262,8 +262,8 @@ def draw_aggregation_of_all_results2(csv_files):
             plt.rcParams.update({'font.size': 14})
             group = df[df['color'] == color_range]
             ax.scatter(group['num_selected_vertices'], group['ratio'] * 100, label=color_range, alpha=1, color=color_map[color_range])
-            ax.axvline(group['num_selected_vertices'].mean(), linestyle='--', color='black', alpha=0.7)
-            ax.text(group['num_selected_vertices'].mean(), 0.1*100, f'{group["num_selected_vertices"].mean():.2f}', verticalalignment='top', horizontalalignment='left')
+            ax.axvline(group['num_selected_vertices'].median(), linestyle='--', color='black', alpha=0.7)
+            ax.text(group['num_selected_vertices'].median(), 0.1*100, f'{group["num_selected_vertices"].mean():.2f}', verticalalignment='top', horizontalalignment='left')
             ax.set_xlim(0, 15)
             # do not show top and right axis
             ax.spines['right'].set_visible(False)

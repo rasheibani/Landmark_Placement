@@ -4,7 +4,6 @@ import multiprocessing
 
 import geopandas as gpd
 import numpy as np
-import pulp
 from shapely.geometry import LineString, Point, Polygon
 import momepy
 import networkx as nx
@@ -12,8 +11,7 @@ import numpy
 import os
 import osmnx as ox
 from collections import Counter
-import gurobipy as gp
-from gurobipy import GRB
+
 
 import random
 from deap import base, creator, tools, algorithms
@@ -64,19 +62,31 @@ def process_floorplan(index, row):
     polygon = row['geometry']
     letter = row['distinct']
     print(letter)
+    floorplan_skeleton = gpd.read_file("realfloorplans/shpa/chadstone_graph_utm.shp")
+    floorplan_corner = gpd.read_file("realfloorplans/shpa/chadstone_Corners_utm.shp")
+
+    edgecount = {}
+    for i in range(101):
+        edgecount[i] = 0
+
+    uncertain_intersection = {}
+    for i in range(10):
+        uncertain_intersection[i] = 0
+
 
     floorplan_intersecting = floorplan_skeleton[floorplan_skeleton.intersects(polygon)]
-    floorplan_border_intersecting = floorplan_border[floorplan_border.intersects(polygon)]
+    # floorplan_border_intersecting = floorplan_border[floorplan_border.intersects(polygon)]
     floorplan_Corners = floorplan_corner[floorplan_corner.intersects(polygon)]
 
     G = momepy.gdf_to_nx(floorplan_intersecting, approach="primal", length="length")
+    print(G)
     H = G
 
     i = 0
 
     while i < 10:  # Merge nodes that are closer than some meter
         for u, v, key, attr in list(G.edges(keys=True, data=True)):
-            if attr['length'] < 100:
+            if attr['length'] < 10:
                 # check if the edge still exists in the graph
                 if G.has_edge(u, v):
                     if G.degree(u) >= G.degree(v):
@@ -86,6 +96,7 @@ def process_floorplan(index, row):
                         # merge the nodes
                         G = nx.contracted_nodes(G, v, u, self_loops=False)
         i = i + 1
+    print(G)
 
     for node in G.nodes():
         edgecount[G.degree(node)] += 1
@@ -110,7 +121,7 @@ def process_floorplan(index, row):
         if 'Weight' in edge[2]:
             if edge[2]['Weight'] > 1:
                 vertices, vertices_ID = find_vertices_within_distance_from_points(floorplan_Corners, gpd.GeoDataFrame(
-                    geometry=[LineString([edge[0], edge[1]])], crs=32639), 150)
+                    geometry=[LineString([edge[0], edge[1]])], crs=32639), 10)
                 all_vertices_ID = list(floorplan_Corners['ID'])
                 ILP.append({'ID': edge[2]['ID'], 'Weight': edge[2]['Weight'], 'vertices': vertices_ID,
                             'all_vertices': all_vertices_ID})
@@ -139,7 +150,7 @@ def process_floorplan(index, row):
     toolbox.register("select", tools.selNSGA2)
 
     NGEN = 5000
-    MU = 100
+    MU = 500
 
     pop = toolbox.population(n=MU)
 
@@ -158,7 +169,11 @@ def process_floorplan(index, row):
             {'letter': letter, 'total_weight': total_weight, 'num_selected_vertices': num_selected_vertices,
              'penalties': penalties, 'uncertain_edges': len(edges), 'sum_of_weight': sum_of_weight,
              'selected_vertex_ids': selected_vertex_ids})
-
+    print(pareto_fronts)
+    with open('pareto_fronts_Chadstone.json', 'w') as f:
+        for element in pareto_fronts:
+            json.dump(element, f)
+            f.write('\n')
     unique_pareto_fronts = []
     for pareto_front in pareto_fronts:
         if pareto_front['total_weight'] > 0:
@@ -183,7 +198,7 @@ def parallel_process():
     for result in results:
         pareto_fronts.extend(result.get())
 
-    with open('pareto_fronts5.json', 'w') as f:
+    with open('pareto_fronts_Falcon.json', 'w') as f:
         for element in pareto_fronts:
             json.dump(element, f)
             f.write('\n')
@@ -208,9 +223,13 @@ if __name__ == '__main__':
     for i in range(10):
         uncertain_intersection[i] = 0
 
-    floorplan_Bbox = gpd.read_file("Curated7/ICD_CalculatedV7.shp")
-    floorplan_border = gpd.read_file("Curated7/OneLetterV7.shp")
-    floorplan_skeleton = gpd.read_file("Curated7/SkelV7.shp")
-    floorplan_corner = gpd.read_file("Curated7/CornersV7.shp")
+    # floorplan_Bbox = gpd.read_file("realfloorplans/shpa/Falcon_BBox.shp")
+    # floorplan_border = gpd.read_file("realfloorplans/shpa/Falcon_OneArea.shp")
+    # floorplan_skeleton = gpd.read_file("realfloorplans/shpa/falcon_graph.shp")
+    # floorplan_corner = gpd.read_file("realfloorplans/shpa/Falcon_Corners.shp")
 
+    floorplan_Bbox = gpd.read_file("realfloorplans/shpa/chadstone_BBox_utm.shp")
+    floorplan_border = gpd.read_file("realfloorplans/shpa/chadstone_area_utm.shp")
+    floorplan_skeleton = gpd.read_file("realfloorplans/shpa/chadstone_graph_utm.shp")
+    floorplan_corner = gpd.read_file("realfloorplans/shpa/chadstone_Corners_utm.shp")
     parallel_process()
