@@ -249,7 +249,7 @@ for index, row in floorplan_Bbox.iterrows():
             if pareto_front not in unique_pareto_fronts:
                 unique_pareto_fronts.append(pareto_front)
     # print(unique_pareto_fronts)
-    with open('../pareto_fronts.json', 'w') as f:
+    with open('../Geojson/pareto_fronts.json', 'w') as f:
         for element in unique_pareto_fronts:
             json.dump(element, f)
             f.write('\n')

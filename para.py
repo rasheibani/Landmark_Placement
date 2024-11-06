@@ -170,7 +170,7 @@ def process_floorplan(index, row):
              'penalties': penalties, 'uncertain_edges': len(edges), 'sum_of_weight': sum_of_weight,
              'selected_vertex_ids': selected_vertex_ids})
     print(pareto_fronts)
-    with open('pareto_fronts_Chadstone.json', 'w') as f:
+    with open('Geojson/pareto_fronts_Chadstone.json', 'w') as f:
         for element in pareto_fronts:
             json.dump(element, f)
             f.write('\n')
@@ -198,7 +198,7 @@ def parallel_process():
     for result in results:
         pareto_fronts.extend(result.get())
 
-    with open('pareto_fronts_Falcon.json', 'w') as f:
+    with open('Geojson/pareto_fronts_Falcon.json', 'w') as f:
         for element in pareto_fronts:
             json.dump(element, f)
             f.write('\n')

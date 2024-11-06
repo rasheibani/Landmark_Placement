@@ -21,7 +21,7 @@ def json_to_csv(json_file, csv_file):
         writer.writerow(headers + ['all_candidates'])
         for row in data:
             # find the corresponding floorplan and all_candidates from all_candidates.csv
-            with open('../all_candidates.csv') as csv_file2:
+            with open('../data_synthetic/all_candidates.csv') as csv_file2:
                 reader = csv.reader(csv_file2)
                 next(reader)
                 for row2 in reader:
@@ -153,7 +153,7 @@ def count_all_candidates_for_all():
         all_candidate = len(floorplan_Corners)
         to_write.append([letter, all_candidate])
 
-    with open('../all_candidates.csv', 'w') as csv_file:
+    with open('../data_synthetic/all_candidates.csv', 'w') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(['letter', 'all_candidates'])
         for row in to_write:
@@ -306,7 +306,7 @@ if __name__ == '__main__':
     # json_to_csv('pareto_fronts.json', 'pareto_fronts.csv')
     # count_all_candidates_for_all()
     # add_all_candidate_column_to_csv('pareto_fronts.csv', 'all_candidates.csv')
-    # add_complexityMeasures_from_xlsx('pareto_fronts.csv', 'Complexity_Criteria_for_v9.xlsx')
+    # add_complexityMeasures_from_xlsx('pareto_fronts.csv', 'Complexity.xlsx')
     # draw_pareto_for_one_floorplan_only('pareto_fronts.csv', 'CBS_Average-Regular_Approach1', all_candidates=False)
     # draw_subplots_based_on_complexity('pareto_fronts.csv', 'Normalized Graph Asymmetry')
     # analyse_pareto_fronts('pareto_fronts.csv', all_candidates=True, Complexity=False)

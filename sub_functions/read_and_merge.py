@@ -155,6 +155,6 @@ if __name__ == "__main__":
         if pareto_front['total_weight'] > 0:
             if pareto_front not in unique_pareto_fronts:
                 unique_pareto_fronts.append(pareto_front)
-    with open('../pareto_fronts.json', 'w') as f:
+    with open('../Geojson/pareto_fronts.json', 'w') as f:
         for element in unique_pareto_fronts:
             json.dump(element, f)
