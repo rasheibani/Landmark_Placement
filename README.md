@@ -1,4 +1,4 @@
-# Landmark Placement in Floorplans
+# Landmark Placement Optimization in Floorplans
 
 This project focuses on the strategic placement of landmarks in floorplans, utilizing both real-world and synthetic data. The goal is to develop computational methods for optimal landmark allocation to aid in wayfinding and spatial navigation.
 
